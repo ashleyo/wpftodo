@@ -1,4 +1,7 @@
-﻿namespace wpftodo {
+﻿using System.Globalization;
+using System.Windows.Data;
+
+namespace wpftodo {
 
     public class Task : INotifyPropertyChanged {
 
@@ -24,23 +27,24 @@
         }
 
         private DateOnly dueDate;
-        public DateOnly DueDate { 
+        public DateOnly DueDate {
             get => dueDate;
-            set { 
-                if ( dueDate != value) {
+            set {
+                if (dueDate != value) {
                     dueDate = value;
                     OnPropertyChanged(nameof(DueDate));
                 }
-            } 
+            }
         }
 
         private bool status;
-        public bool Status { 
-            get => status; 
-            set { if (status != value) { 
+        public bool Status {
+            get => status;
+            set {
+                if (status != value) {
                     status = value;
                     OnPropertyChanged(nameof(Status));
-                } 
+                }
             }
         }
 
@@ -48,16 +52,15 @@
 
         protected virtual void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        
 
-        public override string ToString() => $"{Title} {Description} {DueDate} {(Status ? "Completed":"Incomplete")}";
+
+        public override string ToString() => $"{Title} {Description} {DueDate} {(Status ? "Completed" : "Incomplete")}";
     }
 
-    public class ViewModel: INotifyPropertyChanged 
-    { 
+    public class ViewModel : INotifyPropertyChanged {
         private ObservableCollection<Task> tasks = new();
         public ObservableCollection<Task> Tasks {
-            get => tasks; 
+            get => tasks;
             set {
                 tasks = value;
                 OnPropertyChanged(nameof(Tasks));
@@ -69,16 +72,35 @@
 
         protected virtual void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        
+
         public void Dump() {
             foreach (var task in Tasks) {
                 Debug.WriteLine(task.ToString());
             }
         }
     }
-    
 
-    
+    // stolen from https://learn.microsoft.com/en-us/dotnet/desktop/wpf/data/how-to-convert-bound-data?view=netframeworkdesktop-4.8
+
+    [ValueConversion(typeof(DateOnly), typeof(String))]
+    public class DateStringConverter : IValueConverter {
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+            DateOnly date = (DateOnly)value;
+            return date.ToShortDateString();
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+            if (value is string strValue) {
+                DateOnly resultDate;
+                if (DateOnly.TryParse(strValue, out resultDate))
+                    return resultDate;
+            }
+            return DependencyProperty.UnsetValue;
+        }
+    }
+
+}   
 
 
 
@@ -125,4 +147,3 @@
         }
 
     }*/
-}
